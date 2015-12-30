@@ -68,5 +68,29 @@
                            0)))
     (list current-streak streaks)))
 
+;;;###autoload
+(defun org-dblock-write:habit-summary (params)
+  (let ((streaks (org-map-entries
+                  (lambda ()
+                    (list (org-get-heading t t)
+                          (let ((org-habit-streaks-preceding-days 365))
+                            (org-habit-streaks))))
+                  "STYLE=\"habit\"+TODO=\"TODO\"")))
+    (insert "| Habit | Best Streak | Current Streak |\n")
+    (insert "|-\n")
+    (insert (mapconcat (lambda (row)
+                         (let ((habit (first row))
+                               (best-streak (first (-sort #'> (-map #'length (cdr (second row))))))
+                               (current-streak (car (second row))))
+                           (concat "| "
+                                   (mapconcat (apply-partially 'format "%s")
+                                              (list habit best-streak current-streak)
+                                              " | ")
+                                   "|")))
+                       streaks
+                       "\n"))
+    (org-table-align)))
+
+
 (provide 'org-habit-streaks)
 ;;; org-habit-streaks.el ends here
